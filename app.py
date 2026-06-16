@@ -2,10 +2,21 @@ from flask import Flask, render_template, request, jsonify, send_file
 from flask_cors import CORS
 from excel_manager import ExcelCalendarManager
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
-manager = ExcelCalendarManager()
+
+# Use absolute path for Excel file in production
+if os.environ.get('RENDER'):
+    # On Render.com, use /tmp directory (writable)
+    excel_path = '/tmp/content_calendar.xlsx'
+else:
+    # Local development
+    excel_path = 'content_calendar.xlsx'
+
+# Initialize manager with the correct path
+manager = ExcelCalendarManager(excel_path)
 
 @app.route('/')
 def index():
@@ -73,7 +84,7 @@ def filter_entries():
 def export_file():
     """Download the Excel file"""
     return send_file(manager.filename, as_attachment=True)
+
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
